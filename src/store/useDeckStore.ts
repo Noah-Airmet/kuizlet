@@ -83,7 +83,7 @@ export const useDeckStore = create<DeckState>()(
         set((state) => ({
           decks: state.decks.map((deck) =>
             deck.id === deckId
-              ? { ...deck, title: title.trim() || "Untitled Deck" }
+              ? { ...deck, title }
               : deck
           ),
           updatedAt: Date.now(),
