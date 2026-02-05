@@ -35,7 +35,7 @@ export default function DeckEditor() {
       skipEmptyLines: true,
     });
 
-    const headerFields = headerParse.meta.fields?.map((field) =>
+    const headerFields = headerParse.meta.fields?.map((field: string) =>
       field?.toLowerCase()
     );
 
@@ -45,7 +45,7 @@ export default function DeckEditor() {
 
     if (hasHeader) {
       return (headerParse.data as Record<string, string | undefined>[])
-        .map((row) => {
+        .map((row: Record<string, string | undefined>) => {
           const termValue = row.term ?? row.Term ?? "";
           const definitionValue =
             row.definition ?? row.Definition ?? row.meaning ?? "";
@@ -56,7 +56,7 @@ export default function DeckEditor() {
             status: "new" as const,
           };
         })
-        .filter((card) => card.term || card.definition);
+        .filter((card: Card) => card.term || card.definition);
     }
 
     const noHeaderParse = Papa.parse<string[]>(cleaned, {
