@@ -36,22 +36,22 @@ export default function Study() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6">
       <header className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <p className="kuizlet-label text-xs uppercase text-slate-400">
-            Study Mode
-          </p>
-          <div className="flex items-center gap-3">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="kuizlet-label text-xs uppercase text-slate-400">
+              Study Mode
+            </p>
             <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
               {deck.title}
             </h1>
-            <Link
-              to="/"
-              onClick={() => void syncNow()}
-              className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
-            >
-              Exit
-            </Link>
           </div>
+          <Link
+            to="/"
+            onClick={() => void syncNow()}
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+          >
+            Exit
+          </Link>
         </div>
         <nav className="flex flex-wrap gap-2">
           <ModeTab
