@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Trash2 } from "lucide-react";
 import Papa from "papaparse";
 import { useDeckStore } from "../store/useDeckStore";
@@ -17,6 +17,7 @@ export default function DeckEditor() {
   const updateCard = useDeckStore((state) => state.updateCard);
   const removeCard = useDeckStore((state) => state.removeCard);
   const removeDeck = useDeckStore((state) => state.removeDeck);
+  const navigate = useNavigate();
   const { syncNow, session, statusLabel } = useCloudSync();
   const [term, setTerm] = useState("");
   const [definition, setDefinition] = useState("");
@@ -169,6 +170,7 @@ export default function DeckEditor() {
               );
               if (!proceed) return;
               removeDeck(deck.id);
+              navigate("/");
             }}
             className="inline-flex h-11 items-center justify-center rounded-xl bg-rose-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500"
           >
