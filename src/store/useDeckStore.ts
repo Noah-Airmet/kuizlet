@@ -258,7 +258,14 @@ export const useDeckStore = create<DeckState>()(
       },
       initLearnProgress: (deckId, cardIds) => {
         const existing = get().learnProgress[deckId];
-        if (existing && existing.remainingIds.length > 0) return;
+        if (
+          existing &&
+          (existing.remainingIds.length > 0 ||
+            existing.againIds.length > 0 ||
+            existing.gotIds.length > 0)
+        ) {
+          return;
+        }
         set((state) => ({
           learnProgress: {
             ...state.learnProgress,

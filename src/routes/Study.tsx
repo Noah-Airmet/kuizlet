@@ -319,7 +319,7 @@ function LearnMode({ cards }: { cards: Card[] }) {
   const continueLearn = useDeckStore((state) => state.continueLearn);
   const resetLearn = useDeckStore((state) => state.resetLearn);
   const progress = useDeckStore((state) =>
-    deckId ? state.learnProgress[deckId] : undefined
+    deckId ? state.learnProgress?.[deckId] : undefined
   );
   const [selected, setSelected] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
