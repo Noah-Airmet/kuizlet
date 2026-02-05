@@ -6,5 +6,9 @@ const supabaseAnonKey = import.meta.env
 
 export const supabase =
   supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
+    ? createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          flowType: "pkce",
+        },
+      })
     : null;

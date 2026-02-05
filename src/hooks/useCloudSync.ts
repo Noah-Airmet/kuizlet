@@ -8,6 +8,7 @@ type SyncPayload = {
   flashcardProgress: ReturnType<
     typeof useDeckStore.getState
   >["flashcardProgress"];
+  learnProgress: ReturnType<typeof useDeckStore.getState>["learnProgress"];
   updatedAt: number;
 };
 
@@ -30,6 +31,7 @@ export const useCloudSync = () => {
     return {
       decks: state.decks,
       flashcardProgress: state.flashcardProgress,
+      learnProgress: state.learnProgress,
       updatedAt: state.updatedAt,
     };
   }, []);
@@ -144,7 +146,9 @@ export const useCloudSync = () => {
     if (!supabase) return { error: "Supabase not configured." };
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin },
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
     return { error: error?.message };
   }, []);

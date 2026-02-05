@@ -12,6 +12,14 @@ type DeckState = {
       gotIds: string[];
     }
   >;
+  learnProgress: Record<
+    string,
+    {
+      remainingIds: string[];
+      againIds: string[];
+      gotIds: string[];
+    }
+  >;
   updatedAt: number;
   createDeck: (title: string) => Deck;
   updateDeckTitle: (deckId: string, title: string) => void;
@@ -32,9 +40,18 @@ type DeckState = {
   ) => void;
   continueFlashcards: (deckId: string) => void;
   resetFlashcards: (deckId: string, cardIds: string[]) => void;
+  initLearnProgress: (deckId: string, cardIds: string[]) => void;
+  markLearnCard: (
+    deckId: string,
+    cardId: string,
+    result: "again" | "got"
+  ) => void;
+  continueLearn: (deckId: string) => void;
+  resetLearn: (deckId: string, cardIds: string[]) => void;
   setFromCloud: (payload: {
     decks: Deck[];
     flashcardProgress: DeckState["flashcardProgress"];
+    learnProgress: DeckState["learnProgress"];
     updatedAt: number;
   }) => void;
   getDeckById: (deckId: string) => Deck | undefined;
@@ -47,6 +64,7 @@ export const useDeckStore = create<DeckState>()(
     (set, get) => ({
       decks: [],
       flashcardProgress: {},
+      learnProgress: {},
       updatedAt: Date.now(),
       createDeck: (title) => {
         const deck: Deck = {
@@ -78,6 +96,9 @@ export const useDeckStore = create<DeckState>()(
             Object.entries(state.flashcardProgress).filter(
               ([key]) => key !== deckId
             )
+          ),
+          learnProgress: Object.fromEntries(
+            Object.entries(state.learnProgress).filter(([key]) => key !== deckId)
           ),
           updatedAt: Date.now(),
         }));
@@ -143,6 +164,22 @@ export const useDeckStore = create<DeckState>()(
                   ),
                 }
               : state.flashcardProgress[deckId],
+          },
+          learnProgress: {
+            ...state.learnProgress,
+            [deckId]: state.learnProgress[deckId]
+              ? {
+                  remainingIds: state.learnProgress[deckId].remainingIds.filter(
+                    (id) => id !== cardId
+                  ),
+                  againIds: state.learnProgress[deckId].againIds.filter(
+                    (id) => id !== cardId
+                  ),
+                  gotIds: state.learnProgress[deckId].gotIds.filter(
+                    (id) => id !== cardId
+                  ),
+                }
+              : state.learnProgress[deckId],
           },
           updatedAt: Date.now(),
         }));
@@ -219,10 +256,81 @@ export const useDeckStore = create<DeckState>()(
           updatedAt: Date.now(),
         }));
       },
+      initLearnProgress: (deckId, cardIds) => {
+        const existing = get().learnProgress[deckId];
+        if (existing && existing.remainingIds.length > 0) return;
+        set((state) => ({
+          learnProgress: {
+            ...state.learnProgress,
+            [deckId]: {
+              remainingIds: [...cardIds],
+              againIds: [],
+              gotIds: [],
+            },
+          },
+          updatedAt: Date.now(),
+        }));
+      },
+      markLearnCard: (deckId, cardId, result) => {
+        set((state) => {
+          const progress = state.learnProgress[deckId];
+          if (!progress) return state;
+          if (!progress.remainingIds.includes(cardId)) return state;
+          return {
+            learnProgress: {
+              ...state.learnProgress,
+              [deckId]: {
+                remainingIds: progress.remainingIds.filter((id) => id !== cardId),
+                againIds:
+                  result === "again"
+                    ? [...progress.againIds, cardId]
+                    : progress.againIds,
+                gotIds:
+                  result === "got"
+                    ? [...progress.gotIds, cardId]
+                    : progress.gotIds,
+              },
+            },
+            updatedAt: Date.now(),
+          };
+        });
+      },
+      continueLearn: (deckId) => {
+        set((state) => {
+          const progress = state.learnProgress[deckId];
+          if (!progress) return state;
+          if (progress.againIds.length === 0) return state;
+          return {
+            learnProgress: {
+              ...state.learnProgress,
+              [deckId]: {
+                remainingIds: [...progress.againIds],
+                againIds: [],
+                gotIds: [],
+              },
+            },
+            updatedAt: Date.now(),
+          };
+        });
+      },
+      resetLearn: (deckId, cardIds) => {
+        set((state) => ({
+          learnProgress: {
+            ...state.learnProgress,
+            [deckId]: {
+              remainingIds: [...cardIds],
+              againIds: [],
+              gotIds: [],
+            },
+          },
+          updatedAt: Date.now(),
+        }));
+      },
       setFromCloud: (payload) => {
         set(() => ({
           decks: payload.decks ?? [],
           flashcardProgress: payload.flashcardProgress ?? {},
+          learnProgress: payload.learnProgress ?? {},
           updatedAt: payload.updatedAt ?? Date.now(),
         }));
       },

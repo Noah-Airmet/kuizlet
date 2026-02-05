@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import CloudSyncBar from "./components/CloudSyncBar";
+import AuthCallback from "./routes/AuthCallback";
 import Dashboard from "./routes/Dashboard";
 import DeckEditor from "./routes/DeckEditor";
 import Study from "./routes/Study";
@@ -10,6 +11,7 @@ export default function App() {
       <CloudSyncBar />
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/deck/:deckId" element={<DeckEditor />} />
         <Route path="/study/:deckId/:mode" element={<Study />} />
         <Route path="/study/:deckId" element={<Navigate to="flashcards" />} />

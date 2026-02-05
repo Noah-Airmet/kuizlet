@@ -284,16 +284,28 @@ function Flashcards({ cards }: { cards: Card[] }) {
 }
 
 function LearnMode({ cards }: { cards: Card[] }) {
-  const [index, setIndex] = useState(0);
+  const { deckId } = useParams();
+  const initLearnProgress = useDeckStore((state) => state.initLearnProgress);
+  const markLearnCard = useDeckStore((state) => state.markLearnCard);
+  const continueLearn = useDeckStore((state) => state.continueLearn);
+  const resetLearn = useDeckStore((state) => state.resetLearn);
+  const progress = useDeckStore((state) =>
+    deckId ? state.learnProgress[deckId] : undefined
+  );
   const [selected, setSelected] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [shake, setShake] = useState(false);
 
   useEffect(() => {
-    setIndex(0);
+    if (!deckId) return;
+    const ids = cards.map((card) => card.id);
+    initLearnProgress(deckId, shuffle(ids));
+  }, [cards, deckId, initLearnProgress]);
+
+  useEffect(() => {
     setSelected(null);
     setIsCorrect(null);
-  }, [cards.length]);
+  }, [progress?.remainingIds?.[0]]);
 
   if (cards.length === 0) {
     return (
@@ -301,7 +313,72 @@ function LearnMode({ cards }: { cards: Card[] }) {
     );
   }
 
-  const current = cards[index];
+  if (!deckId || !progress) {
+    return (
+      <EmptyState message="Preparing your learning session. Please wait a moment." />
+    );
+  }
+
+  const remaining = progress.remainingIds;
+  const againCount = progress.againIds.length;
+  const gotCount = progress.gotIds.length;
+
+  if (remaining.length === 0) {
+    if (againCount > 0) {
+      return (
+        <motion.section
+          className="rounded-2xl border border-slate-100 bg-white/90 p-8 text-center shadow-sm backdrop-blur"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
+          <h2 className="text-2xl font-semibold text-slate-900">
+            Great job!
+          </h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Keep going with the ones you missed.
+          </p>
+          <button
+            type="button"
+            onClick={() => continueLearn(deckId)}
+            className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-[color:var(--accent)] px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--accent-dark)]"
+          >
+            Continue Learning
+          </button>
+        </motion.section>
+      );
+    }
+
+    return (
+      <motion.section
+        className="rounded-2xl border border-slate-100 bg-white/90 p-8 text-center shadow-sm backdrop-blur"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <h2 className="text-2xl font-semibold text-slate-900">Congrats!</h2>
+        <p className="mt-2 text-sm text-slate-500">
+          You cleared every card in Learn mode.
+        </p>
+        <button
+          type="button"
+          onClick={() => resetLearn(deckId, shuffle(cards.map((c) => c.id)))}
+          className="mt-6 inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 px-6 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
+        >
+          Reset Learn Progress
+        </button>
+      </motion.section>
+    );
+  }
+
+  const currentId = remaining[0];
+  const current = cards.find((card) => card.id === currentId);
+  if (!current) {
+    return (
+      <EmptyState message="We couldn't find this card. Please refresh the page." />
+    );
+  }
+
   const options = useMemo(() => {
     const distractors = cards.filter((card) => card.id !== current.id);
     const pickCount = Math.min(3, distractors.length);
@@ -317,14 +394,20 @@ function LearnMode({ cards }: { cards: Card[] }) {
     if (!correct) {
       setShake(true);
       setTimeout(() => setShake(false), 450);
+    }
+  };
+
+  const handleContinue = () => {
+    if (!selected) return;
+    if (isCorrect) {
+      markLearnCard(deckId, current.id, "got");
       return;
     }
-    setTimeout(() => {
-      setSelected(null);
-      setIsCorrect(null);
-      setIndex((prev) => (prev + 1) % cards.length);
-    }, 500);
+    markLearnCard(deckId, current.id, "again");
   };
+
+  const totalSeen = againCount + gotCount;
+  const totalCards = cards.length;
 
   return (
     <motion.section
@@ -333,14 +416,43 @@ function LearnMode({ cards }: { cards: Card[] }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
     >
-      <div className="flex items-center justify-between text-sm text-slate-500">
-        <span>
-          Question {index + 1} of {cards.length}
-        </span>
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          Pick the correct term
-        </span>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between text-sm text-slate-500">
+          <span>
+            {totalSeen + 1} of {totalCards}
+          </span>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            Pick the correct term
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-full bg-rose-100/60 px-3 py-2 text-xs font-semibold text-rose-600">
+            Study again: {againCount}
+          </div>
+          <div className="rounded-full bg-emerald-100/70 px-3 py-2 text-xs font-semibold text-emerald-700 text-right">
+            Got it: {gotCount}
+          </div>
+        </div>
+        <div className="mt-1 grid grid-cols-2 gap-3">
+          <div className="h-2 overflow-hidden rounded-full bg-rose-100">
+            <div
+              className="h-full rounded-full bg-rose-400 transition-all"
+              style={{
+                width: `${(againCount / totalCards) * 100}%`,
+              }}
+            />
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-emerald-100">
+            <div
+              className="h-full rounded-full bg-emerald-400 transition-all"
+              style={{
+                width: `${(gotCount / totalCards) * 100}%`,
+              }}
+            />
+          </div>
+        </div>
       </div>
+
       <motion.div
         className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-6 text-center text-xl font-semibold text-slate-900"
         animate={shake ? { x: [-8, 8, -6, 6, 0] } : { x: 0 }}
@@ -373,9 +485,20 @@ function LearnMode({ cards }: { cards: Card[] }) {
           );
         })}
       </div>
+      {selected ? (
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            onClick={handleContinue}
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-[color:var(--accent)] px-5 text-sm font-semibold text-white transition hover:bg-[color:var(--accent-dark)]"
+          >
+            {isCorrect ? "Next" : "Continue"}
+          </button>
+        </div>
+      ) : null}
       {isCorrect === false ? (
-        <p className="mt-4 text-sm text-rose-500">
-          Not quite. The correct answer is highlighted.
+        <p className="mt-3 text-sm text-rose-500">
+          Not quite. We will revisit this one.
         </p>
       ) : null}
     </motion.section>
