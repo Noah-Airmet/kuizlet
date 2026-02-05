@@ -16,7 +16,7 @@ export default function DeckEditor() {
   const addCards = useDeckStore((state) => state.addCards);
   const updateCard = useDeckStore((state) => state.updateCard);
   const removeCard = useDeckStore((state) => state.removeCard);
-  const { syncNow } = useCloudSync();
+  const { syncNow, session, statusLabel } = useCloudSync();
   const [term, setTerm] = useState("");
   const [definition, setDefinition] = useState("");
   const [csvText, setCsvText] = useState("");
@@ -149,6 +149,9 @@ export default function DeckEditor() {
           <p className="mt-1 text-sm text-slate-500">
             {cardCount} cards
           </p>
+          {session?.user && statusLabel.startsWith("Synced") ? (
+            <p className="mt-1 text-xs italic text-slate-400">Deck synced</p>
+          ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Link

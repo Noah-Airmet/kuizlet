@@ -1,10 +1,20 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useDeckStore } from "../store/useDeckStore";
+import { useCloudSync } from "../hooks/useCloudSync";
 
 export default function Dashboard() {
   const decks = useDeckStore((state) => state.decks);
   const createDeck = useDeckStore((state) => state.createDeck);
   const navigate = useNavigate();
+  const { supabaseEnabled, session, signInWithMagicLink, signOut } =
+    useCloudSync();
+
+  const handleLogin = async () => {
+    const email = window.prompt("Enter your email to sign in");
+    if (!email) return;
+    await signInWithMagicLink(email);
+    window.alert("Check your email for the sign-in link.");
+  };
 
   const handleCreateDeck = () => {
     const deck = createDeck("New Deck");
@@ -22,16 +32,37 @@ export default function Dashboard() {
             Your decks
           </h1>
         </div>
-        <Link
-          to="/deck/new"
-          onClick={(event) => {
-            event.preventDefault();
-            handleCreateDeck();
-          }}
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-[color:var(--accent)] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--accent-dark)]"
-        >
-          Create New Deck
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          {supabaseEnabled ? (
+            session?.user ? (
+              <button
+                type="button"
+                onClick={signOut}
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
+              >
+                Sign out
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleLogin}
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
+              >
+                Log in
+              </button>
+            )
+          ) : null}
+          <Link
+            to="/deck/new"
+            onClick={(event) => {
+              event.preventDefault();
+              handleCreateDeck();
+            }}
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-[color:var(--accent)] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[color:var(--accent-dark)]"
+          >
+            Create New Deck
+          </Link>
+        </div>
       </header>
 
       {decks.length === 0 ? (
