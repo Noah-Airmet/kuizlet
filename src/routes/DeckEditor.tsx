@@ -16,6 +16,7 @@ export default function DeckEditor() {
   const addCards = useDeckStore((state) => state.addCards);
   const updateCard = useDeckStore((state) => state.updateCard);
   const removeCard = useDeckStore((state) => state.removeCard);
+  const removeDeck = useDeckStore((state) => state.removeDeck);
   const { syncNow, session, statusLabel } = useCloudSync();
   const [term, setTerm] = useState("");
   const [definition, setDefinition] = useState("");
@@ -160,6 +161,19 @@ export default function DeckEditor() {
           >
             Main Menu
           </Link>
+          <button
+            type="button"
+            onClick={() => {
+              const proceed = window.confirm(
+                "Delete this deck? This cannot be undone."
+              );
+              if (!proceed) return;
+              removeDeck(deck.id);
+            }}
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-rose-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500"
+          >
+            Delete Deck
+          </button>
           <button
             type="button"
             onClick={async () => {
